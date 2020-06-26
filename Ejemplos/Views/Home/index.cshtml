@@ -1,0 +1,103 @@
+﻿@model IEnumerable<Ejemplos.Models.productos>
+<br />
+<br />
+<div class="container">
+    <b>Buscar por: </b>
+    <select id="SearchBy">
+        <option value="Name">Nombre</option>
+        <option value="ID">Id</option>
+    </select><br /><br />
+    @Html.TextBox("Search")<input type="submit" id="SearchBtn" value="Search" /><br /><br />
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Precio</th>
+                <th>Fabricante</th>
+            </tr>
+        </thead>
+        <tbody id="DataSearching">
+            @foreach (var Item in Model)
+            {
+                <tr>
+                    <td>@Item.id</td>
+                    <td>@Item.nombre</td>
+                    <td>@Item.precio</td>
+                    <td>@Item.fabricante</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<div class="container">
+    <table id="grid"></table>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/themes/redmond/jquery-ui.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/free-jqgrid/4.14.0/css/ui.jqgrid.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/free-jqgrid/4.14.0/jquery.jqgrid.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        $("#Search").keyup(function () {
+            var SearchBy = $("#SearchBy").val();
+            var SearchValue = $("#Search").val();
+            var SetData = $("#DataSearching");
+            console.log("SearchBy", SearchBy);
+            console.log("SearchValue", SearchValue);
+            SetData.html("");
+            $.ajax({
+                type: "post",
+                url: "/Home/GetFilteredData?SearchBy=" + SearchBy + "&SearchValue=" + SearchValue,
+                contentType: "html",
+                success: function (result) {
+                    if (result.length == 0) {
+                        SetData.append('<tr style="color:red"><td colspan="3">No se encontrarón datos</td></tr>')
+                    } else {
+                        console.log("result", result);
+                        $.each(result, function (index, value) {
+                            var Data = "<tr>" +
+                                "<td>" + value.id + "</td>" +
+                                "<td>" + value.nombre + "</td>" +
+                                "<td>" + value.precio + "</td>" +
+                                "<td>" + value.fabricante + "</td>" +
+                                "</tr>";
+                            SetData.append(Data);
+                        });
+                    }
+                }
+            });
+        });
+    });
+</script>
+
+<script>
+    $(function () {
+        "use strict";
+        $("#grid").jqGrid({
+            //$.ajax({
+            type: "get",
+            url: "/Home/GetProductos",
+            datatype: "json",
+            colNames: ['Id', 'Nombre', 'Precio', 'Fabricante'],
+            colModel: [
+                { name: 'id', index: 'id', key: true, sorttype: 'integer', searchoptions: {sopt:["eq"]}},
+                { name: 'nombre', index: 'nombre', sorttype: 'string', searchoptions: { sopt: ["ge", "le", "eq"] }},
+                { name: 'precio', index: 'precio', sorttype: 'integer', searchoptions: { sopt: ["eq"] }},
+                { name: 'fabricante', index: 'fabricante', sorttype: 'string', searchoptions: { sopt: ["ge", "le", "eq"] }}
+            ],
+            loadonce: true,
+            viewrecords: true,
+            sortname: 'id',
+            caption: 'Ejemplo de tabla con jqGrid'
+            // });
+        });
+
+        $('#grid').jqGrid('filterToolbar', {
+            stringResult: true,
+            searchOperator: true
+        });
+    });
+</script>
